@@ -15,10 +15,10 @@
 
 RF24 radio(CE_PIN, CSN_PIN);
 
-const byte controller_address[6] = {'R','x','A','A','A'};
-const byte router_address[6] = {'R','x','C','C','C'};
+const byte controller_address[6] = {'R','x','A','A','A'}; //컨트롤러와 직접 통신할 때 사용하는 주소
+const byte router_address[6] = {'R','x','C','C','C'}; //라우터를 사용해 통신 할 때 사용하는 주소
 
-byte address[6] = {};
+byte address[6] = {}; //직접 사용할 주소
 
 unsigned long lastReceiveTime = 0;
 unsigned long lastSendTime = 0;
@@ -30,10 +30,10 @@ void setup() {
   delay(500);
 
   for(int i = 0; i<6;i++){
-    address[i] = router_address[i];
+    address[i] = router_address[i]; //사용할 주소를 설정하는 부분
   }
 
-  pinMode(ENA, OUTPUT);
+  pinMode(ENA, OUTPUT); //모터 설정
   pinMode(ENB, OUTPUT);
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
@@ -41,11 +41,11 @@ void setup() {
   pinMode(IN4, OUTPUT);
   Serial.println("Motor ON");
 
-  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(TRIG_PIN, OUTPUT); //초음파 센서 설정
   pinMode(ECHO_PIN, INPUT);
   Serial.println("Hyper ON");
 
-  radio.begin();
+  radio.begin(); //RF통신 시작
   radio.openReadingPipe(1, address);
   radio.setPALevel(RF24_PA_MAX);
   radio.startListening();
@@ -55,7 +55,7 @@ void setup() {
 }
 
 void loop() {
-  unsigned long currentTime = millis();
+  unsigned long currentTime = millis(); //10초이상 HB를 못받으면 로버 재부팅
   if (currentTime - lastReceiveTime >= timeout) {
     Serial.println("connect die... Reboot!");
     asm volatile("jmp 0");
@@ -63,14 +63,14 @@ void loop() {
 
   if (radio.available()) {
     char receivedMessage[32] = "";
-    radio.read(&receivedMessage, sizeof(receivedMessage));
+    radio.read(&receivedMessage, sizeof(receivedMessage)); //설정한 주소로부터 메시지를 받아옴
     Serial.println(receivedMessage);
-    usemotor(receivedMessage); 
+    usemotor(receivedMessage); //받은 명령에 따라 모터 작동
   } else {
     stopMotors();  
   }
 
-  if (millis() - lastSendTime >= 500) {
+  if (millis() - lastSendTime >= 500) { //0.5초마다 초음파 센서로 받아온 거리 전송
     sendDistance();  
     lastSendTime = millis();
   }
@@ -102,7 +102,7 @@ void usemotor(char* receivedMessage) {
   }
 }
 
-double getDistance() {
+double getDistance() { //거리 계산
   digitalWrite(TRIG_PIN, HIGH);
   delayMicroseconds(10);
   digitalWrite(TRIG_PIN, LOW);
@@ -111,7 +111,7 @@ double getDistance() {
   return distance; 
 }
 
-void sendDistance() {
+void sendDistance() { //거리 전송
   radio.stopListening();  
   radio.openWritingPipe(address); 
 
