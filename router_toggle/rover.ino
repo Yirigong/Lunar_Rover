@@ -22,7 +22,7 @@ byte address[6] = {};
 
 unsigned long lastReceiveTime = 0;
 unsigned long lastSendTime = 0;
-const unsigned long timeout = 10000;
+const unsigned long timeout = 5000;
 
 // Movement state variables for toggle functionality
 bool isMovingUp = false;
