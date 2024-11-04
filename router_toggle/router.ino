@@ -12,6 +12,7 @@ RF24 radio(CE_PIN, CSN_PIN);
 
 const long timeout = 5000;
 unsigned long lastReceiveTime = 0;
+unsigned long checktime = 0;
 bool check_routing = false;
 
 void setup() {
@@ -35,7 +36,7 @@ void loop() {
     if(strcmp(receivedMessage, "HB") == 0){
       lastReceiveTime = millis();
     }
-    else if(strcmp(receivedMessage, "Change_to_router")==0){
+    else if(strcmp(receivedMessage, "Change_to_router")==0){  
       check_routing = true;
       lastReceiveTime = millis();
     }
@@ -49,11 +50,15 @@ void loop() {
       delay(5000);
       asm volatile("jmp 0");
   }
-  Serial.println(millis()-lastReceiveTime);
+  if(millis()-checktime >=100){
+    checktime = millis();
+    Serial.println(millis()-lastReceiveTime);
+  }
 } 
 
 void sendMessageToRover(const char* message) {
     radio.stopListening(); 
     radio.write(message, strlen(message) + 1); //로버로 메시지를 보내줌
+    Serial.println(message);
     radio.startListening(); 
 }
