@@ -80,7 +80,7 @@ void WriteRF() {
 }
 
 
-void ListeningRF() { //설정한 주소로부터 메시지를 받아 화면에 출력함ㄴ
+void ListeningRF() { //설정한 주소로부터 메시지를 받아 화면에 출력함
   radio.openReadingPipe(1,address);
   radio.startListening();  
   if (radio.available()) { 
@@ -106,6 +106,7 @@ void SetChannel(){
     for(int i = 0; i < 6 ; i++){
       address[i] = router_address[i];  //사용하는 주소를 라우터 주소로 변경 -> 라우터 통신
     }
+    sendCommand("Change_to_router");
     delay(1000);
   }
 }
