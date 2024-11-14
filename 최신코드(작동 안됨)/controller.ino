@@ -19,6 +19,7 @@ const byte router_address[6] = {'R','x','B','B','B'}; //라우터를 통해 통�
 
 byte address[6] = {}; //직접 사용할 주소
 
+bool check_routing = false;
 
 void setup() {
   Serial.begin(9600);
@@ -44,40 +45,68 @@ void setup() {
 } 
 
 void loop() {
-  WriteRF(); //입력한 명령과 HB를 로버 또는 중계기로 보냄
+  WriteRF(); //입력한 명령과 HB를 로버 또는 라우터로 보냄
   ListeningRF(); //초음파 센서로 측정한 거리를 받아옴
-  SetChannel(); //채널 설정
+  SetChannel();
 }
 
 
-void sendCommand(const char* command) {  //커맨드를 설정한 주소로 보냄
+void sendCommandBoth(const char* command) {  //커맨드를 설정한 주소로 보냄
   radio.stopListening();
-  radio.openWritingPipe(address);
-  radio.write(command, strlen(command) + 1); 
-  Serial.println(command);
+  radio.openWritingPipe(rover_address);
+  radio.write(command, strlen(command) + 1); //NULL문자 때문에 크기+1
+  radio.openWritingPipe(router_address);
+  radio.write(command, strlen(command)+1);
+}
+
+void sendCommandRouter(const char* command){
+  radio.stopListening();
+  radio.openWritingPipe(router_address);
+  radio.write(command, strlen(command) + 1);
 }
 
 void WriteRF() {
-  if(digitalRead(Up) == LOW){
-    sendCommand("Up");
+  if(check_routing==true){
+    if(digitalRead(Up) == LOW){
+    sendCommandBoth("Up");
     delay(300);
+    }
+    else if(digitalRead(Right) == LOW){
+      sendCommandBoth("Right");
+      delay(300);
+    }
+    else if(digitalRead(Down) == LOW){
+      sendCommandBoth("Stop");
+      delay(300);
+    }
+    else if(digitalRead(Left) == LOW){
+      sendCommandBoth("Left");
+      delay(300);
+    }
   }
-  else if(digitalRead(Right) == LOW){
-    sendCommand("Right");
+  else if(check_routing==false){
+    if(digitalRead(Up) == LOW){
+    sendCommandBoth("Up");
     delay(300);
+    }
+    else if(digitalRead(Right) == LOW){
+      sendCommandBoth("Right");
+      delay(300);
+    }
+    else if(digitalRead(Down) == LOW){
+      sendCommandBoth("Stop");
+      delay(300);
+    }
+    else if(digitalRead(Left) == LOW){
+      sendCommandBoth("Left");
+      delay(300);
+    }
   }
-  else if(digitalRead(Down) == LOW){
-    sendCommand("Stop");
-    delay(300);
-  }
-  else if(digitalRead(Left) == LOW){
-    sendCommand("Left");
-    delay(300);
-  }
-  else if(millis() - lastSendTime >= 1000){ //연결 확인을 위해 HeartBeat방식 사용
-    sendCommand("HB");  
+  if(millis() - lastSendTime >= 1000){ //연결 확인을 위해 HeartBeat방식 사용
+    sendCommandBoth("HB");  
     lastSendTime = millis();
   }
+  
 }
 
 
@@ -94,20 +123,22 @@ void ListeningRF() { //설정한 주소로부터 메시지를 받아 화면에 �
 
 void SetChannel(){
   if(digitalRead(Small_Left)==LOW){
+    check_routing = false;
     Serial.println("Change Channel to Direct");
-    sendCommand("Change_to_direct");
+    sendCommandBoth("Change_to_direct");
     for(int i = 0; i < 6 ; i++){
       address[i] = rover_address[i];  //사용하는 주소를 로버 주소로 변경 -> 직접 통신
     }
     delay(1000);
   }
   else if(digitalRead(Small_Right) == LOW){
+    check_routing = true;
     Serial.println("Change Channel to Router");
-    sendCommand("Change_to_router");
+    sendCommandBoth("Change_to_router");
     for(int i = 0; i < 6 ; i++){
       address[i] = router_address[i];  //사용하는 주소를 라우터 주소로 변경 -> 라우터 통신
     }
-    sendCommand("Change_to_router");
+    sendCommandBoth("Change_to_router");
     delay(1000);
   }
 }
